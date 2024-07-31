@@ -111,6 +111,7 @@ void getVolumeLevelData(double ****arr, const vector<long> &shape_size)
 
 void print_SHAPE_LO_RO_VL(double ****spatialDataArr, const vector<long> &shape_size, const FVector &playerLocation, const FRotation &playerRotation)
 {
+    
     cout << "----------------[array shape start]-----------------" << endl;
     cout << "[" << shape_size[0] << ", " << shape_size[1] << ", " << shape_size[2] << ", " << shape_size[3] << "]" << endl;
     cout << "----------------[array shape end]-------------------" << endl;
