@@ -101,8 +101,8 @@ void getVolumeLevelData(double ****arr, const vector<long> &shape_size)
             {
                 for (int l = 0; l < shape_size[3]; ++l)
                 {
-                    //arr[i][j][k][l] = dis(gen);
-                    arr[i][j][k][l] = 12345678901234567 + (i+j+k+l);
+                    arr[i][j][k][l] = dis(gen);
+                    ///arr[i][j][k][l] = ;
                 }
             }
         }
