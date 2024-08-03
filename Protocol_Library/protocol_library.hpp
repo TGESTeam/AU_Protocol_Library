@@ -24,8 +24,7 @@ enum SeperatorEnum
     PV
 };
 
-struct request
-{
+struct request{
 };
 
 // struct response{
@@ -233,6 +232,14 @@ void print_4d_array(double ****arr, const std::vector<long> &shape_size)
 }
 
 // -------------- cpp -> python -----------------
+int detailed_length_of_long_XYZ(const long& x, const long&y, const long& z){
+    string empty = to_string(x);
+    empty = to_string(y);
+    empty = to_string(z);
+
+
+    return empty.size(); // 채워진 문자열 길이를 return (할당된 공간이 아님)
+}
 
 // 인코딩할 문자열 계산(4개의 Separator)
 // 배열길이, 사용자의 위치, 사용자의 방향, 4차원 데이터
@@ -247,17 +254,37 @@ string::size_type cal_new_string_capacity(const vector<long> &shape_size, const 
         5. (vector의 갯수*3) 만큼 수를 더한다. (Vector는 FVector, FRotation등을 의미)
         6. (위의 수-1)만큼 수를 더한다.
     */
-    const int separatorNum = 4;                                                            // separator 종류
-    const int shapeLength = 4;                                                             // 차원의 종류(2차원이면 값이 2)
-    const int arrayLength = shape_size[0] * shape_size[1] * shape_size[2] * shape_size[3]; // 배열길이
-    const int playerVectorNum = 2;
-    const int maxLengthOfDouble = 16; //double이 최대 15+1(음수)자리 숫자를 가진다... 그러니 이를 체크                                                  // player의 위치, 방향등에 대한 벡터의 갯수
+    // const int separatorNum = 4;                                                            // separator 종류
+    // const int shapeLength = 4;                                                             // 차원의 종류(2차원이면 값이 2)
+    // const int arrayLength = shape_size[0] * shape_size[1] * shape_size[2] * shape_size[3]; // 배열길이
+    // const int playerVectorNum = 2;
+    // const int maxLengthOfDouble = 16; //double이 최대 15+1(음수)자리 숫자를 가진다... 그러니 이를 체크                                                  // player의 위치, 방향등에 대한 벡터의 갯수
+    string::size_type newCapacity = 0;
+    const int SEPARATOR_NUM = 4; // separator 종류 개수
+    const int PLAYER_VECTOR_NUM = 2; // RO, LO등의 사용자의 정보를 Vector로 받은 것
+    const int MAX_LENGTH_Of_DOUBLE = 16; //double이 최대 15+1(음수)자리 숫자를 가진다... 그러니 이를 체크 
+
+    // 1. Separator 길이 계산)
+    newCapacity = (SEPARATOR_NUM*2);
+    
+    // 2. SH는 상세하게 to_string 함수 이용
+    const int STRING_LENGTH_OF_SH = detailed_length_of_long_XYZ(shape_size[0], shape_size[1], shape_size[2]);
+    newCapacity += (STRING_LENGTH_OF_SH)+(STRING_LENGTH_OF_SH-1);
+    
+    // 3. LO, RO는 각각 최대자리수로 잡음
+    newCapacity += (PLAYER_VECTOR_NUM) + (PLAYER_VECTOR_NUM-1);
+
+    // 4. VL도 각각 최대자리수로 잡음 (나중에 빈공간 줄일 예정)
+    newCapacity += (shape_size[0]*shape_size[1]*shape_size[2]*shape_size[3]*MAX_LENGTH_Of_DOUBLE);
+
+    // 5.
 
     // 같은 변수끼리 ()를 더 묶음
-    return (separatorNum * 2)
-           +((shapeLength*maxLengthOfDouble) + (shapeLength - 1)) 
-           +((arrayLength*maxLengthOfDouble) + (arrayLength - 1))
-           +((playerVectorNum*maxLengthOfDouble * 3) + ((playerVectorNum * 3) - 1));
+    return newCapacity;
+    // return (separatorNum * 2)
+    //        +((shapeLength*maxLengthOfDouble) + (shapeLength - 1)) 
+    //        +((arrayLength*maxLengthOfDouble) + (arrayLength - 1))
+    //        +((playerVectorNum*maxLengthOfDouble * 3) + ((playerVectorNum * 3) - 1));
 }
 
 void encoding_to_SH(const vector<long> &shape_size, string &encodedStr)
@@ -295,7 +322,7 @@ void encoding_to_LO(const FVector &playerLocation, string &encodedStr)
 
 void encoding_to_RO(const FRotation &playerRotation, string &encodedStr)
 {
-    encodedStr.append("LO"); // separator 설정
+    encodedStr.append("RO"); // separator 설정
 
     encodedStr.append(to_string(playerRotation.Pitch));
     encodedStr.append(",");
