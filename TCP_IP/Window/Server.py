@@ -1,6 +1,8 @@
 import socket
 import subprocess
 
+import numpy as np
+
 def get_ethernet_mtu():
     try:
         # netsh 명령어 실행 (cp949 인코딩으로 실행)
@@ -64,8 +66,17 @@ def start_server():
             print(f"Received request: {data}")
 
             # 받은 데이터를 그대로 클라이언트에 응답
-            print(f"Sent response: {data}")
-            client_socket.send(data.encode('utf-8'))
+            # print(f"Sent response: {data}")
+            # SL50000SH10,50,30,5PV1.333,2.333,3.333,4.4444,5.5555,6.6666
+            #double_ranom_np = np.random.rand(62500)
+            double_ranom_np = np.random.rand(114576 )
+            str2 = ",".join([f"{x:.18f}" for x in double_ranom_np])
+            str2 = "SL50000" + str2
+                
+            #print(len(str))
+            #print(len(str))
+            print(f"Sent response: {len(str2)}")
+            client_socket.send(str2.encode('utf-8'))
 
 
         except Exception as e:
@@ -78,9 +89,7 @@ def start_server():
 
 if __name__ == "__main__":
     start_server()
-
-
-
+    
 
 
 # #recv 사이즈를 수동으로 지정해주는 방법
