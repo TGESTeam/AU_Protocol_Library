@@ -3,8 +3,8 @@ import threading
 import numpy as np
 
 print("Load and print the numpy file")
-load_py = np.load('D:/UnrealData/apartment_room_all.npy')
-flattened_array = load_py[6, :, :, :, 0].reshape(-1)[:500]
+load_py = np.load('D:/UnrealData/slicing_sample_data.npy')
+flattened_array = load_py[6, :, :, :, 0].reshape(-1)[:60]
 formatted_string = ",".join(map(str, flattened_array))
 print(formatted_string)
 
@@ -17,7 +17,8 @@ def handle_client(client_socket, server_id, port):
             if port == 8081:
                 print(f"Server {server_id} received: {message}")
                 print(message)
-                client_socket.send(formatted_string.encode('utf-8'))
+                parshing = "PV" + formatted_string
+                client_socket.send(parshing.encode('utf-8'))
             elif port == 8082:
                 print(f"Server {server_id} received: {message}")
                 print(message)
