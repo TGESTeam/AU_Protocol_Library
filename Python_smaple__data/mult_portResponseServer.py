@@ -16,14 +16,16 @@ flattened_array = load_py[kind, :, :, :, time]
 x, y, z = 10, 10, 10
 re_flattened_array = flattened_array[x:x+10, y:y+10, z:z+5].reshape(-1)
 
+#port 8082
+temp = np.rot90(flattened_array, 1, axes=(0,2))
+Port8082z = temp.max(axis=0).reshape(-1)
+Port8082y = temp.max(axis=1).reshape(-1)
+Port8082x = temp.max(axis=2).reshape(-1)
+
 
 #port 8083
 selectXYZ = 1
-temp = np.rot90(flattened_array, 1, axes=(0,2))
-
-# Port8082z = temp.max(axis=0).reshape(-1)
-# Port8082y = temp.max(axis=1).reshape(-1)
-# Port8082x = temp.max(axis=2).reshape(-1)
+#temp = np.rot90(flattened_array, 1, axes=(0,2))
 
 #port 8083 100x100 resize 필요.
 Port8083z = temp.max(axis=0)
@@ -59,11 +61,88 @@ def handle_client(client_socket, server_id, port):
                 #print("parshing " + parshing)
                 client_socket.send(parshing.encode('utf-8'))
             elif port == 8082:
-                # x,y,z값에 따라 응답값을 주어야함.
-                print(f"Server {server_id} 8082 received: {message}")
-                print(message)
-                response = f"Server {server_id} acknowledges: {message}"
+                print(f"Server {server_id} 8082 acknowledges: {message}")
+                KIND_PV_LENGTH = 7;
+                # 'KI' 위치 찾기
+                message_idx = message.find('KI')
+
+                # 초기 변수 선언
+                kind_pv_arr = []
+                location_xyz = []
+                now_time_str = ""
+                future_time_str = ""
+
+                # 'KI'가 있는지 확인
+                if message_idx != -1:
+                    # 구독된 Kind PV를 담음
+                    kind_pv_arr = message[(message_idx + 2):(message_idx + 2 + KIND_PV_LENGTH - 1)]
+                    message_idx += 2 + KIND_PV_LENGTH
+
+                    # 'TN' 위치 찾기
+                    end_idx = message.find('TN')
+
+                    # TN이 존재할 경우
+                    if end_idx != -1:
+                        message_idx += 2
+                        # 사용자의 위치가 담긴 location 배열
+                        location_xyz_str = message[message_idx:end_idx].split(',')
+                        
+                        location_xyz_str = np.array(location_xyz_str, dtype=float)
+                        location_xyz = np.floor(location_xyz_str)
+                        
+                        # TN 이후 부분에서 시간 정보 찾기
+                        message_idx = end_idx + 2
+                        for i in range(message_idx, len(message)):
+                            if message[i] != 'T':
+                                end_idx = i
+                            else:
+                                break
+                        
+                        # 시간 정보 문자열을 추출
+                        now_time_str = message[message_idx:end_idx]
+                        if end_idx != len(message):
+                            future_time_str = message[end_idx+3:]           
+                
+                # 배열길이 초과를 방지하기 위해 (테스트)
+                x = location_xyz[0]
+                y = location_xyz[1]
+                z = location_xyz[2]
+                k = now_time_str
+                
+                if(x >= load_py.shape[1]):
+                    x = load_py.shape[1]-1
+                    
+                if(y >= load_py.shpae[2]):
+                    y = load_py.shpae[2]-1
+                
+                if(z >= load_py.shape[3]):
+                    z = load_py.shape[3]-1
+                    
+                if(k >= load_py.shape[4]):
+                    k = load_py.shape[4]-1;
+                
+                # 요청한 현재 시간의 정보를 response추가
+                for i in kind_pv_arr:
+                    if(kind_pv_arr[i] == 1):
+                        response += f"{load_py[kind_pv_arr[i]][x][y][z][k]},"
+                
+                if(future_time_str == 0):
+                    response.pop()
+                
+                else:
+                    for i in range(1, future_time_str/10):
+                        if (k+i) > load_py.shape[4]:
+                            k = load_py.shape[4]
+                        else:
+                            k += i
+                            
+                        response += f"{load_py[kind_pv_arr[i]][x][y][z][k]},"
+                
+                    response .pop()
+                #response
+                print(f"--->8082 response: f{response}")
                 client_socket.send(response.encode('utf-8'))
+            
             elif port == 8083:
                 print(f"Server {server_id}  8083 received: {message}")
                 print(message)
