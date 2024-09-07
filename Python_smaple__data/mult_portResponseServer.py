@@ -18,8 +18,10 @@ re_flattened_array = flattened_array[x:x+10, y:y+10, z:z+5].reshape(-1)
 
 
 #port 8083
+flattened_array_two = load_py[kind, :, :, :, -400]
 selectXYZ = 1
 temp = np.rot90(flattened_array, 1, axes=(0,2))
+temp_two = np.rot90(flattened_array_two, 1, axes=(0,2))
 
 # Port8082z = temp.max(axis=0).reshape(-1)
 # Port8082y = temp.max(axis=1).reshape(-1)
@@ -27,16 +29,22 @@ temp = np.rot90(flattened_array, 1, axes=(0,2))
 
 #port 8083 100x100 resize 필요.
 Port8083z = temp.max(axis=0)
+Port8083z_two = temp_two.max(axis=0)
 Port8083y = temp.max(axis=1)
 Port8083x = temp.max(axis=2)
+
 
 resized_Port8083x = cv2.resize(Port8083x, (100, 100), interpolation=cv2.INTER_LINEAR)
 resized_Port8083y = cv2.resize(Port8083y, (100, 100), interpolation=cv2.INTER_LINEAR)
 resized_Port8083z = cv2.resize(Port8083z, (100, 100), interpolation=cv2.INTER_LINEAR)
+resized_Port8083_two =  cv2.resize(Port8083z_two, (100, 100), interpolation=cv2.INTER_LINEAR)
+# resized_Port8083z = cv2.resize(Port8083z, (100, 100), interpolation=cv2.INTER_LINEAR)
+# resized_Port8083_two =  cv2.resize(Port8083z_two, (100, 100), interpolation=cv2.INTER_LINEAR)
 
 resized_Port8083x = resized_Port8083x.reshape(-1)
 resized_Port8083y = resized_Port8083y.reshape(-1)
 resized_Port8083z = resized_Port8083z.reshape(-1)
+resized_Port8083_two = resized_Port8083_two.reshape(-1)
 
 # parshing port 8081
 formatted_string = ",".join(map(str, re_flattened_array))
@@ -44,13 +52,18 @@ formatted_string = ",".join(map(str, re_flattened_array))
 resized_Port8083x = ",".join(map(str, resized_Port8083x))
 resized_Port8083y = ",".join(map(str, resized_Port8083y))
 resized_Port8083z = ",".join(map(str, resized_Port8083z))
+resized_Port8083_two = ",".join(map(str, resized_Port8083_two))
 print(formatted_string)
 
+check = True
+
 def handle_client(client_socket, server_id, port):
+    global check
     while True:
         try:
             message = client_socket.recv(3000).decode('utf-8')
             if not message:
+                print(f"Server {server_id}  8083 received: break")
                 break
             if port == 8081: # 완성
                 print(f"Server {server_id} 8081 received: {message}")
@@ -86,7 +99,12 @@ def handle_client(client_socket, server_id, port):
                         response = f"{resized_Port8083y}"
                     # z 일 때
                     elif selectedXYZ == 2:
-                        response = f"{resized_Port8083z}"
+                        if check:  # Corrected check handling
+                            response = f"{resized_Port8083z}"
+                            check = False
+                        else:
+                            response = f"{resized_Port8083_two}"
+                            check = True
                 # response = f"Server {server_id} acknowledges: {message}"
                 client_socket.send(response.encode('utf-8'))
         except ConnectionResetError:
